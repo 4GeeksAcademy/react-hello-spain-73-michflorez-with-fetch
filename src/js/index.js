@@ -1,13 +1,11 @@
-//import react into the bundle
-import React from "react";
-import ReactDOM from "react-dom/client";
+// src/index.js
+import React from 'react';
+import {createRoot} from 'react-dom/client'
+import '/workspaces/react-hello-spain-73-michflorez/src/styles/index.css'
+import App from './component/App';
 
-// include your styles into the webpack bundle
-import "../styles/index.css";
 
-//import your own components
-import Home from "./component/home.jsx";
+const root = createRoot(document.querySelector("#app"))
 
 //render your react application
-ReactDOM.createRoot(document.getElementById('app')).render(<Home/>);
-
+root.render(<App/>)
