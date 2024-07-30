@@ -5,6 +5,7 @@ import '/workspaces/react-hello-spain-73-michflorez/src/styles/index.css'
 import App from './component/App';
 
 
+
 const root = createRoot(document.querySelector("#app"))
 
 //render your react application
