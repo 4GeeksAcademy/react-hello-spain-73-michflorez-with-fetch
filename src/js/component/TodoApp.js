@@ -1,124 +1,122 @@
-// src/TodoApp.js
 import React, { useState, useEffect } from 'react';
-import TodoList from '../component/TodoList'
-import '/workspaces/react-hello-spain-73-michflorez/src/styles/TodoApp.css'
-
-const apiUrl = 'https://playground.4geeks.com/todo/users/alesanchezr';
 
 const TodoApp = () => {
-  const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState('');
+  const [todos, setTodos] = useState([]); // State to hold the list of tasks
+  const [newTask, setNewTask] = useState(''); // State to hold the new task input value
 
+  const API_URL = 'https://playground.4geeks.com/todo/user/alesanchezr'; // API endpoint URL
+
+  // Fetch tasks from API on component mount
   useEffect(() => {
-    fetchTasks();
+    fetch(API_URL) // Make a GET request to the API
+      .then(resp => {
+        if (!resp.ok) {
+          throw new Error(`HTTP error! status: ${resp.status}`); // Handle HTTP errors
+        }
+        return resp.json(); // Parse the response as JSON
+      })
+      .then(data => {
+        console.log('Initial data from server:', data); // Log the initial data received from the server
+        setTodos(data); // Set the tasks to the fetched data
+      })
+      .catch(error => {
+        console.error('Failed to fetch initial data:', error); // Log any errors that occur during the fetch
+      });
   }, []);
 
-  const fetchTasks = async () => {
-    try {
-      const response = await fetch(apiUrl);
-      console.log(response)
-      if (response.ok) {
-        const data = await response.json();
-        console.log(data)
-       
-          setTasks(data.todos);
-        
-      } else if (response.status === 404) {
-         createUser();
-      }
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-    }
+  // Function to add a task
+  const addTask = () => {
+    if (newTask.trim() === '') return; // Check if the new task input is empty
+
+    const newTodos = [...todos, { label: newTask, done: false }]; // Add the new task to the existing list
+    setTodos(newTodos); // Update the state with the new list
+    setNewTask(''); // Clear the input field
+
+    syncWithServer(newTodos); // Sync the updated list with the server
   };
 
-  const createUser = async () => {
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        //body: JSON.stringify([]),
-      });
-      if (response.ok) {
-        console.log('User created successfully');
-        fetchTasks()
-      } else {
-        console.error('Error creating user:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Error creating user:', error);
-    }
+  // Function to remove a specific task
+  const removeTask = (index) => {
+    const newTodos = todos.filter((_, idx) => idx !== index); // Remove the task at the specified index
+    setTodos(newTodos); // Update the state with the new list
+
+    syncWithServer(newTodos); // Sync the updated list with the server
   };
 
-  const updateTasks = async (updatedTasks) => {
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        //body: JSON.stringify(updatedTasks.map(label => ({ label, done: false }))),
-      });
-      if (response.ok) {
-        //setTasks(updatedTasks);
-        console.log('Tasks updated successfully');
-      } else {
-        console.error('Error updating tasks:', response.statusText);
+  // Function to clear all tasks
+  const clearAllTasks = () => {
+    setTodos([]); // Clear all tasks from the state
+
+    fetch(API_URL, {
+      method: "DELETE", // Use the DELETE method to remove all tasks
+      headers: {
+        "Content-Type": "application/json"
       }
-    } catch (error) {
-      console.error('Error updating tasks:', error);
-    }
+    })
+    .then(resp => {
+      if (!resp.ok) {
+        throw new Error(`HTTP error! status: ${resp.status}`); // Handle HTTP errors
+      }
+      console.log('User and all tasks deleted from server'); // Log success message
+    })
+    .catch(error => {
+      console.error('Failed to delete user from server:', error); // Log any errors that occur during the fetch
+    });
   };
 
-  const addTask = async (e) => {
-    if (e.key === 'Enter' && newTask.trim()) {
-      const updatedTasks = [...tasks, newTask];
-      await updateTasks(updatedTasks);
-      setNewTask('');
-    }
-  };
-
-  const deleteTask = async (id) => {
-    try {
-      const response = await fetch('https://playground.4geeks.com/todo/todos/'+ id, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        fetchTasks()
-        console.log('tarea eliminada');
-      } else {
-        console.error('Error clearing tasks:', response.statusText);
+  // Function to sync tasks with server
+  const syncWithServer = (tasks) => {
+    fetch(API_URL, {
+      method: "PUT", // Use the PUT method to update tasks
+      body: JSON.stringify(tasks), // Send the updated list of tasks as JSON
+      headers: {
+        "Content-Type": "application/json"
       }
-    } catch (error) {
-      console.error('Error clearing tasks:', error);
-    }
-  };
-
-  const clearAllTasks = async () => {
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        setTasks([]);
-        console.log('All tasks cleared successfully');
-      } else {
-        console.error('Error clearing tasks:', response.statusText);
+    })
+    .then(resp => {
+      if (!resp.ok) {
+        throw new Error(`HTTP error! status: ${resp.status}`); // Handle HTTP errors
       }
-    } catch (error) {
-      console.error('Error clearing tasks:', error);
-    }
+      return resp.json(); // Parse the response as JSON
+    })
+    .then(data => {
+      console.log('Synced with server:', data); // Log the response data
+    })
+    .catch(error => {
+      console.error('Failed to sync with server:', error); // Log any errors that occur during the fetch
+    });
   };
 
   return (
-    <div className="todo-app">
-      <h1>todos</h1>
+    <div className="todo-app" style={{ maxWidth: '300px', margin: '0 auto', textAlign: 'center' }}>
+      <h1 style={{ fontSize: '2em', color: '#f5a5a5', margin: '0' }}>todos</h1>
+      <h2 style={{ fontSize: '1.5em', color: '#f5a5a5', margin: '10px 0' }}>Todo List</h2>
       <input
         type="text"
-        value={newTask}
-        onChange={(e) => setNewTask(e.target.value)}
-        onKeyPress={addTask}
         placeholder="What needs to be done?"
+        value={newTask} // Bind the input value to the newTask state
+        onChange={(e) => setNewTask(e.target.value)} // Update the state when the input value changes
+        style={{ width: '100%', padding: '10px', fontSize: '1em', marginBottom: '10px' }}
       />
-      <TodoList tasks={tasks} deleteTask={deleteTask} newTask={newTask} setNewTask={setNewTask} />
-      <button onClick={clearAllTasks}>Clear All Tasks</button>
+      <button onClick={addTask} style={{ marginBottom: '10px', padding: '10px 15px', cursor: 'pointer' }}>
+        Add Task
+      </button>
+      <button onClick={clearAllTasks} style={{ marginBottom: '10px', padding: '10px 15px', cursor: 'pointer' }}>
+        Clear All Tasks
+      </button>
+      <ul style={{ listStyle: 'none', padding: '0' }}>
+        {todos.map((todo, index) => (
+          <li key={index} style={{ textAlign: 'left', padding: '10px', borderBottom: '1px solid #ccc' }}>
+            <span>{todo.label}</span>
+            <button
+              onClick={() => removeTask(index)} // Call the removeTask function with the index of the task to remove
+              style={{ float: 'right', cursor: 'pointer', color: 'red', background: 'none', border: 'none' }}
+            >
+              Clear Task
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
